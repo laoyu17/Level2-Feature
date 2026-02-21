@@ -59,6 +59,7 @@ l2f validate-schema --input examples/sample_data/l2_sample.csv
 ```
 
 > 说明：L2+ 深度列需按档位完整成组出现（`bid_px_i/bid_sz_i/ask_px_i/ask_sz_i`），并保持连续。
+> 若源字段名不一致（如 `timestamp/code/trade_price`），可追加 `--canonicalize` 做别名适配。
 
 ### 2) 离线批处理特征提取
 
@@ -70,6 +71,7 @@ l2f compute \
 ```
 
 > `trade_sign` 优先读取 `side`（支持 `-1/0/1`、`B/S`、`BUY/SELL`），无法解析时回退价格推断。
+> 若希望请求深度必须与数据一致，可追加 `--strict-depth`，避免自动降级到有效深度。
 
 ### 3) 流式回放（增量特征）
 
@@ -80,6 +82,8 @@ l2f replay \
   --limit 2000 \
   --output outputs/replay.parquet
 ```
+
+> `--output` 支持 `.parquet` 与 `.csv`。
 
 ### 4) 性能基准
 

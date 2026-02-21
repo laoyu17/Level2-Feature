@@ -4,10 +4,16 @@ from pathlib import Path
 
 import polars as pl
 
+from l2_features.io.adapter import canonicalize_level2
 from l2_features.schema import normalize_dtypes, validate_required_columns
 
 
-def read_level2(path: str | Path, *, lazy: bool = False) -> pl.DataFrame | pl.LazyFrame:
+def read_level2(
+    path: str | Path,
+    *,
+    lazy: bool = False,
+    canonicalize: bool = False,
+) -> pl.DataFrame | pl.LazyFrame:
     """读取 Level2/Tick 数据，自动识别 csv/parquet。"""
 
     data_path = Path(path)
@@ -20,9 +26,15 @@ def read_level2(path: str | Path, *, lazy: bool = False) -> pl.DataFrame | pl.La
     else:
         raise ValueError(f"Unsupported file format: {data_path}")
 
+    if lazy and canonicalize:
+        raise ValueError("canonicalize=True is not supported when lazy=True")
+
     if lazy:
         validate_required_columns(frame)
         return frame
+
+    if canonicalize:
+        return canonicalize_level2(frame)
 
     validate_required_columns(frame)
     return normalize_dtypes(frame)
@@ -34,8 +46,20 @@ def read_level2_with_filters(
     symbol: str | None = None,
     ts_start: int | None = None,
     ts_end: int | None = None,
+    canonicalize: bool = False,
 ) -> pl.DataFrame:
-    lf = read_level2(path, lazy=True)
+    if canonicalize:
+        df = read_level2(path, lazy=False, canonicalize=True)
+        assert isinstance(df, pl.DataFrame)
+        if symbol:
+            df = df.filter(pl.col("symbol") == symbol)
+        if ts_start is not None:
+            df = df.filter(pl.col("ts") >= ts_start)
+        if ts_end is not None:
+            df = df.filter(pl.col("ts") <= ts_end)
+        return df
+
+    lf = read_level2(path, lazy=True, canonicalize=False)
     assert isinstance(lf, pl.LazyFrame)
 
     if symbol:

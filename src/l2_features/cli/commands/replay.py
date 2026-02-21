@@ -17,6 +17,13 @@ def replay_command(
         typer.Option("--input", exists=True, help="输入 Level2 文件"),
     ],
     symbol: Annotated[str | None, typer.Option("--symbol", help="按 symbol 过滤")] = None,
+    canonicalize: Annotated[
+        bool,
+        typer.Option(
+            "--canonicalize",
+            help="启用字段别名适配（timestamp/code/trade_price 等映射到标准 schema）",
+        ),
+    ] = False,
     speed: Annotated[float, typer.Option("--speed", min=0.1, help="回放倍速")] = 1.0,
     limit: Annotated[int | None, typer.Option("--limit", min=1, help="最多回放事件数")] = 2000,
     realtime: Annotated[
@@ -25,10 +32,10 @@ def replay_command(
     ] = False,
     output_path: Annotated[
         Path | None,
-        typer.Option("--output", help="将回放结果导出为 parquet"),
+        typer.Option("--output", help="将回放结果导出为 parquet/csv"),
     ] = None,
 ) -> None:
-    df = read_level2_with_filters(input_path, symbol=symbol)
+    df = read_level2_with_filters(input_path, symbol=symbol, canonicalize=canonicalize)
     if limit:
         df = df.head(limit)
 
@@ -58,5 +65,12 @@ def replay_command(
 
     if output_path and out_rows:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        pl.DataFrame(out_rows).write_parquet(output_path)
+        out_df = pl.DataFrame(out_rows)
+        suffix = output_path.suffix.lower()
+        if suffix == ".parquet":
+            out_df.write_parquet(output_path)
+        elif suffix == ".csv":
+            out_df.write_csv(output_path)
+        else:
+            raise typer.BadParameter("--output 仅支持 .parquet 或 .csv")
         typer.echo(f"Saved replay features to {output_path.as_posix()}")

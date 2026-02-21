@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import polars as pl
+import pytest
 
 from l2_features.features.engine import compute_features_batch
 
@@ -66,3 +67,22 @@ def test_trade_sign_parses_string_side_with_fallback() -> None:
     out = compute_features_batch(df, keep_raw=False)
 
     assert out["trade_sign"].to_list() == [1.0, -1.0, 1.0, -1.0, 1.0]
+
+
+def test_compute_features_batch_strict_depth_raises() -> None:
+    df = pl.DataFrame(
+        {
+            "ts": [1, 2],
+            "symbol": ["000001.SZ", "000001.SZ"],
+            "event_type": ["quote", "quote"],
+            "last_px": [10.0, 10.01],
+            "last_sz": [100.0, 100.0],
+            "bid_px_1": [9.99, 10.0],
+            "bid_sz_1": [1000.0, 1100.0],
+            "ask_px_1": [10.01, 10.02],
+            "ask_sz_1": [1200.0, 1300.0],
+        }
+    )
+
+    with pytest.raises(ValueError, match="Requested depth_levels=2 exceeds detected depth=1"):
+        compute_features_batch(df, depth_levels=2, strict_depth=True, keep_raw=False)

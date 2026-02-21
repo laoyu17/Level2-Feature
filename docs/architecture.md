@@ -11,7 +11,7 @@
 
 ## 2. 数据流
 
-- 批处理：`reader -> schema validate -> feature engine -> output parquet/csv`
+- 批处理：`reader -> (optional adapter canonicalize) -> schema validate -> feature engine -> output parquet/csv`
 - 流处理：`event -> StreamFeatureUpdater -> feature vector -> CLI replay/UI(stream 模式)/导出`
 - UI 回放：
   - `batch-playback`：`reader -> feature engine -> UI`
@@ -20,7 +20,8 @@
 ## 3. 模块职责
 
 - `schema.py`：字段约束、类型归一化、深度档位完整性校验
-- `io/reader.py`：文件读取与过滤
+- `io/reader.py`：文件读取、过滤与可选 canonicalize 入口
+- `io/adapter.py`：字段别名映射与标准 schema 归一化
 - `features/*.py`：按特征类别拆分计算逻辑
 - `stream/*.py`：状态管理与增量更新
 - `cli/*`：命令行编排与参数接口

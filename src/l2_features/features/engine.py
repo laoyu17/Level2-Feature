@@ -58,6 +58,7 @@ def compute_features_batch(
     volatility_windows: tuple[int, ...] = DEFAULT_VOL_WINDOWS,
     selected_features: Iterable[str] | None = None,
     keep_raw: bool = True,
+    strict_depth: bool = False,
 ) -> pl.DataFrame:
     """批处理计算 Level2 微观结构特征。"""
 
@@ -66,7 +67,12 @@ def compute_features_batch(
     validate_required_columns(df)
     df = normalize_dtypes(df)
 
-    effective_depth = min(depth_levels, detect_depth_levels(df.columns))
+    detected_depth = detect_depth_levels(df.columns)
+    if strict_depth and depth_levels > detected_depth:
+        raise ValueError(
+            f"Requested depth_levels={depth_levels} exceeds detected depth={detected_depth}"
+        )
+    effective_depth = min(depth_levels, detected_depth)
     has_side = "side" in df.columns
 
     out = df.sort(["symbol", "ts"])

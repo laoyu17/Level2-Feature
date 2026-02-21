@@ -36,10 +36,17 @@ def benchmark_command(
         typer.Option("--input", exists=True, help="输入 Level2 文件"),
     ],
     symbol: Annotated[str | None, typer.Option("--symbol", help="按 symbol 过滤")] = None,
+    canonicalize: Annotated[
+        bool,
+        typer.Option(
+            "--canonicalize",
+            help="启用字段别名适配（timestamp/code/trade_price 等映射到标准 schema）",
+        ),
+    ] = False,
     rows: Annotated[int, typer.Option("--rows", min=100)] = 200000,
     mode: Annotated[str, typer.Option("--mode", help="batch|stream|both")] = "both",
 ) -> None:
-    df = read_level2_with_filters(input_path, symbol=symbol).head(rows)
+    df = read_level2_with_filters(input_path, symbol=symbol, canonicalize=canonicalize).head(rows)
 
     if mode not in {"batch", "stream", "both"}:
         raise typer.BadParameter("--mode 必须是 batch|stream|both")

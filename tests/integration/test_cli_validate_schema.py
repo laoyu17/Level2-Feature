@@ -40,3 +40,29 @@ def test_cli_validate_schema_rejects_incomplete_depth(tmp_path: Path) -> None:
     assert result.exit_code != 0
     assert result.exception is not None
     assert "Incomplete depth columns" in str(result.exception)
+
+
+def test_cli_validate_schema_with_canonicalize_aliases(tmp_path: Path) -> None:
+    alias_path = tmp_path / "alias_depth.csv"
+    pl.DataFrame(
+        {
+            "timestamp": [1],
+            "code": ["000001.SZ"],
+            "type": ["quote"],
+            "trade_price": [10.0],
+            "trade_size": [100.0],
+            "bid_px_1": [9.99],
+            "bid_sz_1": [2000.0],
+            "ask_px_1": [10.01],
+            "ask_sz_1": [2100.0],
+        }
+    ).write_csv(alias_path)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        ["validate-schema", "--input", str(alias_path), "--canonicalize"],
+    )
+
+    assert result.exit_code == 0
+    assert "Schema valid" in result.output

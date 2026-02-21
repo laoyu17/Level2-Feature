@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.4 - 2026-02-21
+
+- `l2f replay --output` 支持 `.parquet/.csv`，并对非法后缀给出明确参数错误
+- `l2f compute` 增加 `--strict-depth`：在请求深度高于数据实际深度时可选择直接失败
+- `l2f compute` 输出增加深度信息（requested/detected/effective），避免静默降级歧义
+- 读取主链路增加 `--canonicalize` 可选字段别名适配（compute/replay/benchmark/validate-schema）
+- 补充 replay 输出格式、strict-depth、canonicalize 的单元与集成测试
+
 ## 0.1.3 - 2026-02-21
 
 - 统一 batch/stream 的 `trade_sign` 解析契约，支持 `-1/0/1`、`B/S`、`BUY/SELL` 并在非法值时回退价格推断
