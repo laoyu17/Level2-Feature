@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 import polars as pl
 from typer.testing import CliRunner
 
 from l2_features.cli.main import app
+
+ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def test_cli_replay_supports_parquet_and_csv_output(sample_csv_path: Path, tmp_path: Path) -> None:
@@ -70,6 +73,5 @@ def test_cli_replay_rejects_unsupported_output_suffix(
     assert not bad_path.exists()
 
     error_text = result.stderr or result.output
-    assert "--output" in error_text
-    assert ".parquet" in error_text
-    assert ".csv" in error_text
+    plain_error = ANSI_ESCAPE_RE.sub("", error_text)
+    assert "仅支持 .parquet 或 .csv" in plain_error
