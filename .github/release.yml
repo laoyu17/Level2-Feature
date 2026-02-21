@@ -1,0 +1,44 @@
+changelog:
+  exclude:
+    labels:
+      - "skip-changelog"
+  categories:
+    - title: "🚀 Features"
+      labels:
+        - "feat"
+    - title: "⚡ Performance"
+      labels:
+        - "perf"
+    - title: "🐛 Fixes"
+      labels:
+        - "fix"
+    - title: "♻️ Refactor"
+      labels:
+        - "refactor"
+    - title: "🧪 Tests"
+      labels:
+        - "test"
+    - title: "📝 Documentation"
+      labels:
+        - "docs"
+    - title: "🔧 Chore"
+      labels:
+        - "chore"
+    - title: "📦 Other"
+      labels:
+        - "*"
+
+template: |
+  ## What changed
+
+  $CHANGES
+
+  ## Verification
+
+  - [ ] `ruff check .`
+  - [ ] `pytest -q`
+  - [ ] `l2f benchmark --input examples/sample_data/l2_sample.csv --rows 1000 --mode both`
+
+  ## Notes
+
+  - Data in this repo is synthetic/public sample data only.

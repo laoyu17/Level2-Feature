@@ -1,5 +1,7 @@
 # l2-features (English Summary)
 
+[![CI](https://github.com/laoyu17/Level2-Feature/actions/workflows/ci.yml/badge.svg)](https://github.com/laoyu17/Level2-Feature/actions/workflows/ci.yml)
+
 `l2-features` is an open-source toolkit for extracting microstructure features from Level2/Tick data.
 
 ## Highlights
@@ -8,6 +10,10 @@
 - Incremental stream updater for online feature generation
 - PyQt6 replay UI for interview/demo scenarios
 - Production-style engineering setup (CLI + CI + regression tests + docs)
+
+## Demo
+
+![l2-features demo replay](assets/demo_replay.gif)
 
 ## Quick Start
 

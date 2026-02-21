@@ -1,5 +1,7 @@
 # l2-features
 
+[![CI](https://github.com/laoyu17/Level2-Feature/actions/workflows/ci.yml/badge.svg)](https://github.com/laoyu17/Level2-Feature/actions/workflows/ci.yml)
+
 `l2-features` 是一个面向 Level2/Tick 高频数据的开源微观结构特征提取工具。项目重点是：
 
 - 高性能离线计算（Polars/Arrow）
@@ -15,6 +17,10 @@
 2. 同时支持 batch 与 stream 两种计算模式
 3. 提供性能基准命令，可量化吞吐表现
 4. UI 可直接用于面试现场演示“数据回放 + 特征变化”
+
+## 演示录屏
+
+![l2-features demo replay](assets/demo_replay.gif)
 
 ## 功能清单（MVP）
 
