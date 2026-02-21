@@ -4,11 +4,8 @@ from collections import deque
 from pathlib import Path
 from typing import Any
 
-import polars as pl
-
-from l2_features.features.engine import compute_features_batch
 from l2_features.io.reader import read_level2_with_filters
-from l2_features.stream.updater import StreamFeatureUpdater
+from l2_features.ui.replay_builder import build_replay_frames, normalize_replay_mode
 
 try:
     from PyQt6.QtCore import QObject, QTimer, pyqtSignal
@@ -48,13 +45,7 @@ class ReplayViewModel(QObject):
         return self._mode
 
     def set_mode(self, mode: str) -> None:
-        normalized = mode.strip().lower()
-        if normalized in {"batch", "batch-playback"}:
-            target = "batch-playback"
-        elif normalized in {"stream", "stream-playback"}:
-            target = "stream-playback"
-        else:
-            raise ValueError(f"Unsupported replay mode: {mode}")
+        target = normalize_replay_mode(mode)
 
         if target == self._mode:
             return
@@ -79,23 +70,7 @@ class ReplayViewModel(QObject):
         self.stats_changed.emit(f"Loaded {len(self._frames)} frames ({self._mode})")
 
     def _rebuild_frames(self) -> None:
-        if not self._source_frames:
-            self._frames = []
-            return
-
-        if self._mode == "batch-playback":
-            source_df = pl.DataFrame(self._source_frames)
-            features = compute_features_batch(source_df, keep_raw=True)
-            self._frames = [r for r in features.iter_rows(named=True)]
-            return
-
-        updater = StreamFeatureUpdater()
-        replay_frames: list[dict[str, Any]] = []
-        for frame in self._source_frames:
-            merged = dict(frame)
-            merged.update(updater.update(frame))
-            replay_frames.append(merged)
-        self._frames = replay_frames
+        self._frames = build_replay_frames(self._source_frames, self._mode)
 
     def set_speed(self, speed: float) -> None:
         self._speed = max(speed, 0.1)

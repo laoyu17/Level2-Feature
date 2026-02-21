@@ -10,6 +10,17 @@ import typer
 from l2_features.io.reader import read_level2_with_filters
 from l2_features.stream.updater import StreamFeatureUpdater
 
+SUPPORTED_REPLAY_OUTPUT_SUFFIXES = {".parquet", ".csv"}
+
+
+def _validate_output_path(output_path: Path | None) -> None:
+    if output_path is None:
+        return
+
+    suffix = output_path.suffix.lower()
+    if suffix not in SUPPORTED_REPLAY_OUTPUT_SUFFIXES:
+        raise typer.BadParameter("仅支持 .parquet 或 .csv", param_hint="--output")
+
 
 def replay_command(
     input_path: Annotated[
@@ -35,6 +46,8 @@ def replay_command(
         typer.Option("--output", help="将回放结果导出为 parquet/csv"),
     ] = None,
 ) -> None:
+    _validate_output_path(output_path)
+
     df = read_level2_with_filters(input_path, symbol=symbol, canonicalize=canonicalize)
     if limit:
         df = df.head(limit)
@@ -69,8 +82,6 @@ def replay_command(
         suffix = output_path.suffix.lower()
         if suffix == ".parquet":
             out_df.write_parquet(output_path)
-        elif suffix == ".csv":
-            out_df.write_csv(output_path)
         else:
-            raise typer.BadParameter("--output 仅支持 .parquet 或 .csv")
+            out_df.write_csv(output_path)
         typer.echo(f"Saved replay features to {output_path.as_posix()}")

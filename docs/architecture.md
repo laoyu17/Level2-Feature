@@ -11,7 +11,7 @@
 
 ## 2. 数据流
 
-- 批处理：`reader -> (optional adapter canonicalize) -> schema validate -> feature engine -> output parquet/csv`
+- 批处理：`reader -> (optional adapter canonicalize) -> schema validate -> feature engine -> output parquet/csv`（`compute` 兼容 `.txt`，按 csv 写出）
 - 流处理：`event -> StreamFeatureUpdater -> feature vector -> CLI replay/UI(stream 模式)/导出`
 - UI 回放：
   - `batch-playback`：`reader -> feature engine -> UI`

@@ -20,6 +20,9 @@ l2f replay --input examples/sample_data/l2_sample.csv --output outputs/replay.cs
 l2f ui
 ```
 
+- `l2f compute --output` 支持 `.parquet/.csv/.txt`，其中 `.txt` 按 CSV 写出（兼容历史脚本）
+- `l2f replay --output` 仅支持 `.parquet/.csv`，非法后缀会在回放前直接报错（fail-fast）
+
 ## 3. 开发流程
 
 1. 从 `main` 拉出 `feat/*` 或 `fix/*`

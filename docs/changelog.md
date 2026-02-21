@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.5 - 2026-02-21
+
+- `l2f replay --output` 后缀校验前置：非法后缀在回放前直接失败，不再出现先打印 `Replay done` 再报错
+- 强化 replay 非法后缀集成测试，新增“不进入回放主流程且不生成输出文件”的断言
+- 文档补充 `l2f compute --output` 的 `.txt` 兼容语义：按 CSV 格式写出
+
 ## 0.1.4 - 2026-02-21
 
 - `l2f replay --output` 支持 `.parquet/.csv`，并对非法后缀给出明确参数错误

@@ -72,6 +72,7 @@ l2f compute \
 
 > `trade_sign` 优先读取 `side`（支持 `-1/0/1`、`B/S`、`BUY/SELL`），无法解析时回退价格推断。
 > 若希望请求深度必须与数据一致，可追加 `--strict-depth`，避免自动降级到有效深度。
+> `l2f compute --output` 支持 `.parquet/.csv/.txt`，其中 `.txt` 按 CSV 格式写出（向后兼容）。
 
 ### 3) 流式回放（增量特征）
 

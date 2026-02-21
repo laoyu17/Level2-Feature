@@ -66,4 +66,10 @@ def test_cli_replay_rejects_unsupported_output_suffix(
     )
 
     assert result.exit_code != 0
-    assert "--output 仅支持 .parquet 或 .csv" in result.output
+    assert "Replay done:" not in result.stdout
+    assert not bad_path.exists()
+
+    error_text = result.stderr or result.output
+    assert "--output" in error_text
+    assert ".parquet" in error_text
+    assert ".csv" in error_text
