@@ -8,7 +8,7 @@
 
 - High-throughput batch pipeline with Polars/Arrow
 - Incremental stream updater for online feature generation
-- PyQt6 replay UI for interview/demo scenarios
+- PyQt6 replay UI for interactive data playback and inspection
 - Production-style engineering setup (CLI + CI + regression tests + docs)
 
 ## Demo
