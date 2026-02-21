@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "l2-features"
+version = "0.1.0"
+description = "Level2 market microstructure feature extraction toolkit"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+  { name = "laoyu17" }
+]
+dependencies = [
+  "numpy>=1.26",
+  "polars>=1.10",
+  "pyarrow>=16.0",
+  "typer>=0.12",
+]
+
+[project.optional-dependencies]
+perf = [
+  "numba>=0.60",
+]
+ui = [
+  "PyQt6>=6.6",
+  "pyqtgraph>=0.13",
+]
+dev = [
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "pre-commit>=3.8",
+]
+
+[project.scripts]
+l2f = "l2_features.cli.main:app"
+l2f-ui = "l2_features.ui.app:run_ui"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/l2_features"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = false
+warn_unused_configs = true
+warn_return_any = true
+warn_unused_ignores = true
+ignore_missing_imports = true

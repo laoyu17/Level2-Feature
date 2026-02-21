@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "feat/**", "fix/**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Unit and integration tests
+        run: pytest tests/unit tests/integration -q
+
+      - name: Regression tests
+        run: pytest tests/regression -q
+
+      - name: Perf smoke
+        run: pytest tests/perf -q
