@@ -20,6 +20,7 @@ MIN_REQUIRED_COLUMNS = (
 OPTIONAL_COLUMNS = ("side",)
 
 REQUIRED_COLUMNS = MIN_REQUIRED_COLUMNS
+DEPTH_PREFIXES = ("bid_px", "bid_sz", "ask_px", "ask_sz")
 
 
 @dataclass(slots=True)
@@ -27,7 +28,7 @@ class FeatureConfig:
     """配置批处理或流式计算行为。"""
 
     depth_levels: int = 10
-    volatility_windows: tuple[int, ...] = (1_000_000_000, 5_000_000_000, 30_000_000_000)
+    volatility_windows: tuple[int, ...] = (20, 100, 500)
     default_symbol: str | None = None
 
 
@@ -69,17 +70,58 @@ def required_columns(depth_levels: int = 1) -> tuple[str, ...]:
     return tuple(base)
 
 
+def _depth_presence_map(columns: set[str]) -> dict[int, set[str]]:
+    present: dict[int, set[str]] = {}
+    for col in columns:
+        for prefix in DEPTH_PREFIXES:
+            token = f"{prefix}_"
+            if col.startswith(token):
+                suffix = col[len(token) :]
+                if suffix.isdigit():
+                    level = int(suffix)
+                    present.setdefault(level, set()).add(prefix)
+                break
+    return present
+
+
+def validate_depth_layout(columns: list[str] | tuple[str, ...] | set[str]) -> None:
+    """校验 L2+ 深度列是否完整且连续。"""
+
+    column_set = set(columns)
+    present = _depth_presence_map(column_set)
+    expected_prefixes = set(DEPTH_PREFIXES)
+
+    for level in sorted(level for level in present if level > 1):
+        prefixes = present[level]
+        if prefixes != expected_prefixes:
+            missing = sorted(f"{prefix}_{level}" for prefix in (expected_prefixes - prefixes))
+            raise ValueError(
+                f"Incomplete depth columns at level {level}, missing columns: {missing}"
+            )
+
+    if not present:
+        return
+
+    max_level = max(present)
+    for level in range(2, max_level + 1):
+        if level not in present:
+            raise ValueError(f"Depth levels must be contiguous, missing level {level}")
+
+
 def detect_depth_levels(columns: list[str] | tuple[str, ...]) -> int:
     """从列名推断当前快照支持的盘口档位数。"""
 
-    levels = []
-    for col in columns:
-        if col.startswith("bid_px_"):
-            try:
-                levels.append(int(col.rsplit("_", 1)[1]))
-            except ValueError:
-                continue
-    return max(levels) if levels else 1
+    column_set = set(columns)
+    depth = 1
+    level = 2
+    while True:
+        required = {f"{prefix}_{level}" for prefix in DEPTH_PREFIXES}
+        if required.issubset(column_set):
+            depth = level
+            level += 1
+            continue
+        break
+    return depth
 
 
 def validate_required_columns(
@@ -100,6 +142,8 @@ def validate_required_columns(
     if missing:
         raise ValueError(f"Missing required columns: {missing}")
 
+    validate_depth_layout(columns)
+
 
 def normalize_dtypes(df: pl.DataFrame) -> pl.DataFrame:
     """统一核心字段类型，避免后续计算出现隐式转换。"""
@@ -113,7 +157,7 @@ def normalize_dtypes(df: pl.DataFrame) -> pl.DataFrame:
     ]
 
     if "side" in df.columns:
-        cast_exprs.append(pl.col("side").cast(pl.Int8))
+        cast_exprs.append(pl.col("side").cast(pl.Utf8))
 
     for name in df.columns:
         if name.startswith(("bid_px_", "ask_px_", "bid_sz_", "ask_sz_")):

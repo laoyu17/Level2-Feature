@@ -28,6 +28,7 @@
 - 行为类：`cancel_intensity`、`add_cancel_ratio`、`order_flow_imbalance`
 - 成交类：`trade_sign_imbalance_20`、`instant_impact`、`amihud_proxy`
 - 波动类：`rv_20/rv_100/rv_500`
+- 回放模式：`batch-playback` / `stream-playback`
 
 ## 安装
 
@@ -57,6 +58,8 @@ python -m pip install -e .[ui]
 l2f validate-schema --input examples/sample_data/l2_sample.csv
 ```
 
+> 说明：L2+ 深度列需按档位完整成组出现（`bid_px_i/bid_sz_i/ask_px_i/ask_sz_i`），并保持连续。
+
 ### 2) 离线批处理特征提取
 
 ```bash
@@ -65,6 +68,8 @@ l2f compute \
   --output outputs/features.parquet \
   --depth-levels 10
 ```
+
+> `trade_sign` 优先读取 `side`（支持 `-1/0/1`、`B/S`、`BUY/SELL`），无法解析时回退价格推断。
 
 ### 3) 流式回放（增量特征）
 
@@ -92,6 +97,8 @@ l2f ui
 # 或
 l2f-ui
 ```
+
+> UI 默认 `batch-playback`，可在界面中切换到 `stream-playback` 以查看增量特征路径。
 
 ## 工程规范
 

@@ -14,11 +14,11 @@
 
 - `order_flow_imbalance`：基于 bid/ask 价格与挂单量变化的 OFI 近似
 - `cancel_intensity`：撤单量占前一时刻挂单总量比例
-- `add_cancel_ratio`：新增挂单量与撤单量的比值
+- `add_cancel_ratio`：新增挂单量与撤单量的比值（当撤单量为 0 时记为 `0`，避免无穷大）
 
 ## 成交冲击类
 
-- `trade_sign`：来自 side 或由价格变动推断
+- `trade_sign`：优先使用 `side`，支持 `-1/0/1`、`B/S`、`BUY/SELL`（大小写不敏感）；无法解析时回退到价格变动推断
 - `trade_sign_imbalance_20`：20 事件滚动均值
 - `instant_impact = abs(last_px - mid_px) / mid_px`
 - `amihud_proxy = abs(log_return) / last_sz`
@@ -27,3 +27,13 @@
 
 - `log_return = log(last_px / last_px.shift(1))`
 - `rv_20/rv_100/rv_500`：滚动标准差乘以窗口开方
+
+## Stream 输出约定（核心）
+
+- Stream 输出字段与 batch 同名核心列保持一致（如 `mid_px`、`spread_abs`、`obi_l1`、`order_flow_imbalance`、`log_return`）
+- 同时提供 `rv_stream` 作为向后兼容字段
+
+## Schema 约束补充
+
+- L2+ 深度列必须按档位完整出现（每档同时包含 `bid_px_i/bid_sz_i/ask_px_i/ask_sz_i`）
+- 深度档位必须连续，不允许跳档（例如存在 L3 但缺失 L2）

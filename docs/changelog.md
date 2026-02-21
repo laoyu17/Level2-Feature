@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.3 - 2026-02-21
+
+- 统一 batch/stream 的 `trade_sign` 解析契约，支持 `-1/0/1`、`B/S`、`BUY/SELL` 并在非法值时回退价格推断
+- 增加深度档位完整性校验：L2+ 必须成组出现且档位连续，缺列会在 schema 校验阶段直接报错
+- 对齐 `FeatureConfig.volatility_windows` 默认语义为事件窗口 `(20, 100, 500)`
+- 补充 side 解析、深度缺列失败路径、batch/stream 一致性的单元与集成测试
+
+## 0.1.2 - 2026-02-21
+
+- 修复 `add_cancel_ratio` 在无撤单场景的数值语义，避免异常极值
+- 扩展 `StreamFeatureUpdater` 输出契约，补齐与 batch 同名核心特征列并保留 `rv_stream`
+- UI 回放增加 `batch-playback` / `stream-playback` 模式切换
+- 新增 batch/stream 关键列一致性集成测试
+- 更新架构/特征定义/开发指南与 README 说明
+
 ## 0.1.1 - 2026-02-21
 
 - 初始化 git 并完成首提，推送到 `origin/main`
