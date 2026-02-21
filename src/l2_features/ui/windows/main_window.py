@@ -5,6 +5,7 @@ from pathlib import Path
 try:
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
+        QComboBox,
         QFileDialog,
         QGridLayout,
         QGroupBox,
@@ -71,6 +72,9 @@ class MainWindow(QMainWindow):
         speed_half = QPushButton("0.5x")
         speed_one = QPushButton("1x")
         speed_two = QPushButton("2x")
+        self.mode_selector = QComboBox()
+        self.mode_selector.addItems(["batch-playback", "stream-playback"])
+        self.mode_selector.currentTextChanged.connect(self._on_mode_changed)
 
         play_btn.clicked.connect(self._vm.play)
         pause_btn.clicked.connect(self._vm.pause)
@@ -81,6 +85,8 @@ class MainWindow(QMainWindow):
 
         for w in [play_btn, pause_btn, stop_btn, speed_half, speed_one, speed_two]:
             control_layout.addWidget(w)
+        control_layout.addWidget(QLabel("Mode"))
+        control_layout.addWidget(self.mode_selector)
         control_layout.addStretch()
 
         content = QWidget()
@@ -161,11 +167,17 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Load failed", str(exc))
 
     def _on_data_loaded(self, rows: int) -> None:
-        self.statusBar().showMessage(f"Loaded {rows} frames")
+        self.statusBar().showMessage(f"Loaded {rows} frames ({self._vm.mode})")
 
     def _on_frame(self, frame: dict) -> None:
         self._update_book_table(frame)
         self.feature_plot.update_history(self._vm.history)
+
+    def _on_mode_changed(self, mode: str) -> None:
+        try:
+            self._vm.set_mode(mode)
+        except Exception as exc:  # pragma: no cover
+            QMessageBox.warning(self, "Replay mode", str(exc))
 
     def _update_book_table(self, frame: dict) -> None:
         for i in range(1, 11):

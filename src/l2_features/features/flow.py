@@ -39,7 +39,7 @@ def flow_feature_exprs() -> list[pl.Expr]:
     return [
         ofi.alias("order_flow_imbalance"),
         _safe_div(cancel_total, prev_bid_sz + prev_ask_sz).alias("cancel_intensity"),
-        _safe_div(add_total, cancel_total + 1e-9).alias("add_cancel_ratio"),
+        _safe_div(add_total, cancel_total).alias("add_cancel_ratio"),
         bid_cancel.alias("bid_cancel"),
         ask_cancel.alias("ask_cancel"),
     ]

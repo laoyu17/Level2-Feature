@@ -4,8 +4,11 @@ from collections import deque
 from pathlib import Path
 from typing import Any
 
+import polars as pl
+
 from l2_features.features.engine import compute_features_batch
 from l2_features.io.reader import read_level2_with_filters
+from l2_features.stream.updater import StreamFeatureUpdater
 
 try:
     from PyQt6.QtCore import QObject, QTimer, pyqtSignal
@@ -25,7 +28,9 @@ class ReplayViewModel(QObject):
         self._timer.timeout.connect(self._on_tick)
         self._speed = 1.0
         self._interval_ms = 50
+        self._mode = "batch-playback"
 
+        self._source_frames: list[dict[str, Any]] = []
         self._frames: list[dict[str, Any]] = []
         self._idx = 0
         self._history: dict[str, deque[float]] = {
@@ -38,15 +43,59 @@ class ReplayViewModel(QObject):
     def history(self) -> dict[str, deque[float]]:
         return self._history
 
+    @property
+    def mode(self) -> str:
+        return self._mode
+
+    def set_mode(self, mode: str) -> None:
+        normalized = mode.strip().lower()
+        if normalized in {"batch", "batch-playback"}:
+            target = "batch-playback"
+        elif normalized in {"stream", "stream-playback"}:
+            target = "stream-playback"
+        else:
+            raise ValueError(f"Unsupported replay mode: {mode}")
+
+        if target == self._mode:
+            return
+
+        self._mode = target
+        if self._source_frames:
+            self._rebuild_frames()
+            self._idx = 0
+            for values in self._history.values():
+                values.clear()
+        self.stats_changed.emit(f"Replay mode: {self._mode}")
+
     def load_file(self, path: Path, symbol: str | None = None, limit: int = 5000) -> None:
         df = read_level2_with_filters(path, symbol=symbol).head(limit)
-        features = compute_features_batch(df, keep_raw=True)
-        self._frames = [r for r in features.iter_rows(named=True)]
+        self._source_frames = [r for r in df.iter_rows(named=True)]
+        self._rebuild_frames()
         self._idx = 0
 
         for values in self._history.values():
             values.clear()
         self.data_loaded.emit(len(self._frames))
+        self.stats_changed.emit(f"Loaded {len(self._frames)} frames ({self._mode})")
+
+    def _rebuild_frames(self) -> None:
+        if not self._source_frames:
+            self._frames = []
+            return
+
+        if self._mode == "batch-playback":
+            source_df = pl.DataFrame(self._source_frames)
+            features = compute_features_batch(source_df, keep_raw=True)
+            self._frames = [r for r in features.iter_rows(named=True)]
+            return
+
+        updater = StreamFeatureUpdater()
+        replay_frames: list[dict[str, Any]] = []
+        for frame in self._source_frames:
+            merged = dict(frame)
+            merged.update(updater.update(frame))
+            replay_frames.append(merged)
+        self._frames = replay_frames
 
     def set_speed(self, speed: float) -> None:
         self._speed = max(speed, 0.1)
