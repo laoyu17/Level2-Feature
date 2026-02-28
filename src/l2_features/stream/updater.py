@@ -19,6 +19,8 @@ except Exception:  # pragma: no cover - fallback for unsupported python/arch
 from l2_features.stream.state import StreamState
 from l2_features.trade_sign import parse_trade_side_value
 
+REQUIRED_EVENT_FIELDS = ("ts", "symbol", "bid_px_1", "ask_px_1", "bid_sz_1", "ask_sz_1")
+
 
 @njit(cache=True)
 def _scaled_std(values: np.ndarray) -> float:
@@ -98,6 +100,16 @@ def _rolling_mean_last(values: list[float], window: int) -> float:
     return float(sum(values[-window:]) / window)
 
 
+def _validate_required_event_fields(event: Mapping[str, Any]) -> None:
+    missing_fields = [field for field in REQUIRED_EVENT_FIELDS if field not in event]
+    if missing_fields:
+        required = ", ".join(REQUIRED_EVENT_FIELDS)
+        missing = ", ".join(missing_fields)
+        raise ValueError(
+            f"StreamFeatureUpdater.update requires fields [{required}], missing: {missing}"
+        )
+
+
 class StreamFeatureUpdater:
     """在线增量计算器，适用于逐条 Tick/Level2 事件。"""
 
@@ -128,6 +140,9 @@ class StreamFeatureUpdater:
         return self._states[symbol]
 
     def update(self, event: Mapping[str, Any]) -> dict[str, float | int | str]:
+        """更新一条事件并返回特征，必填字段为 ts/symbol/bid_px_1/ask_px_1/bid_sz_1/ask_sz_1。"""
+        _validate_required_event_fields(event)
+
         symbol = str(event["symbol"])
         state = self._state(symbol)
 

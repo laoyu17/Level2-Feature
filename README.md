@@ -79,12 +79,15 @@ l2f compute \
 ```bash
 l2f replay \
   --input examples/sample_data/l2_sample.csv \
+  --realtime \
+  --ts-unit ns \
   --speed 1.0 \
   --limit 2000 \
   --output outputs/replay.parquet
 ```
 
 > `--output` 支持 `.parquet` 与 `.csv`。
+> `--ts-unit` 支持 `ns/us/ms/s`，默认 `ns`（仅在 `--realtime` 下生效）。
 
 ### 4) 性能基准
 

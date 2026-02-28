@@ -16,12 +16,13 @@ pytest tests/unit -q
 pytest tests/integration -q
 pytest tests/integration/test_batch_stream_consistency.py -q
 l2f compute --input examples/sample_data/l2_sample.csv --output outputs/features.parquet --strict-depth
-l2f replay --input examples/sample_data/l2_sample.csv --output outputs/replay.csv
+l2f replay --input examples/sample_data/l2_sample.csv --realtime --ts-unit ns --output outputs/replay.csv
 l2f ui
 ```
 
 - `l2f compute --output` 支持 `.parquet/.csv/.txt`，其中 `.txt` 按 CSV 写出（兼容历史脚本）
 - `l2f replay --output` 仅支持 `.parquet/.csv`，非法后缀会在回放前直接报错（fail-fast）
+- `l2f replay --ts-unit` 支持 `ns/us/ms/s`，默认 `ns`（仅在 `--realtime` 模式生效）
 
 ## 3. 开发流程
 
@@ -43,3 +44,8 @@ l2f ui
 - 深度档位必须完整且连续（每档 `bid_px_i/bid_sz_i/ask_px_i/ask_sz_i` 成组出现）
 - 字段不统一时可启用 `--canonicalize`（如 `timestamp/code/trade_price/type`）
 - 建议在接入新数据源后先运行：`l2f validate-schema --input <path>`
+
+## 6. 发版检查项
+
+- `pyproject.toml` 中 `[project].version` 必须与 `docs/changelog.md` 最新版本号一致
+- 发布说明需引用与 Changelog 对应的同一版本条目，避免安装版本与文档版本错位

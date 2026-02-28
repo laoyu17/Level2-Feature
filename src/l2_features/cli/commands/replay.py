@@ -11,6 +11,12 @@ from l2_features.io.reader import read_level2_with_filters
 from l2_features.stream.updater import StreamFeatureUpdater
 
 SUPPORTED_REPLAY_OUTPUT_SUFFIXES = {".parquet", ".csv"}
+TS_UNIT_TO_SECONDS_DENOMINATOR = {
+    "ns": 1_000_000_000.0,
+    "us": 1_000_000.0,
+    "ms": 1_000.0,
+    "s": 1.0,
+}
 
 
 def _validate_output_path(output_path: Path | None) -> None:
@@ -41,12 +47,26 @@ def replay_command(
         bool,
         typer.Option("--realtime", help="按时间戳模拟实时回放"),
     ] = False,
+    ts_unit: Annotated[
+        str,
+        typer.Option(
+            "--ts-unit",
+            help="时间戳单位（仅在 --realtime 时生效）：ns/us/ms/s",
+            case_sensitive=False,
+        ),
+    ] = "ns",
     output_path: Annotated[
         Path | None,
         typer.Option("--output", help="将回放结果导出为 parquet/csv"),
     ] = None,
 ) -> None:
     _validate_output_path(output_path)
+    ts_unit_normalized = ts_unit.lower()
+    if ts_unit_normalized not in TS_UNIT_TO_SECONDS_DENOMINATOR:
+        raise typer.BadParameter(
+            "仅支持 ns/us/ms/s",
+            param_hint="--ts-unit",
+        )
 
     df = read_level2_with_filters(input_path, symbol=symbol, canonicalize=canonicalize)
     if limit:
@@ -60,7 +80,9 @@ def replay_command(
     for row in df.iter_rows(named=True):
         ts = int(row["ts"])
         if realtime and last_ts is not None and ts > last_ts:
-            wait_seconds = ((ts - last_ts) / 1_000_000_000) / speed
+            wait_seconds = (
+                (ts - last_ts) / TS_UNIT_TO_SECONDS_DENOMINATOR[ts_unit_normalized]
+            ) / speed
             if wait_seconds > 0:
                 time.sleep(min(wait_seconds, 1.0))
 

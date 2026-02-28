@@ -30,6 +30,7 @@ l2f benchmark --input examples/sample_data/l2_sample.csv --rows 200000 --mode bo
 - Add `--strict-depth` to `l2f compute` if requested depth must match detected depth (no auto downgrade).
 - `l2f compute --output` supports `.parquet/.csv/.txt`; `.txt` is written in CSV format for backward compatibility.
 - `l2f replay --output` supports both `.parquet` and `.csv`.
+- `l2f replay --ts-unit` supports `ns/us/ms/s` (default `ns`, effective only with `--realtime`).
 
 For UI:
 

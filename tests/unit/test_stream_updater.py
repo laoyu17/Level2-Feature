@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from l2_features.stream.updater import StreamFeatureUpdater
 
 
@@ -90,3 +92,17 @@ def test_stream_updater_parses_string_side_with_fallback() -> None:
 
     outputs = [updater.update(event) for event in events]
     assert [row["trade_sign"] for row in outputs] == [1.0, -1.0, 1.0]
+
+
+def test_stream_updater_missing_required_fields_raises_readable_error() -> None:
+    updater = StreamFeatureUpdater()
+    event_missing_bid_sz = {
+        "ts": 1,
+        "symbol": "000001.SZ",
+        "bid_px_1": 9.99,
+        "ask_px_1": 10.01,
+        "ask_sz_1": 1800,
+    }
+
+    with pytest.raises(ValueError, match="missing: bid_sz_1"):
+        updater.update(event_missing_bid_sz)
